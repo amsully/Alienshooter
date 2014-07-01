@@ -6,14 +6,19 @@ Created on May 30, 2014
 
 
 '''
-NOTES UPDATED 6/25/2014
+NOTES UPDATED 7/1/2014
 Alex's Notes
+    (7/1/2014)
+    - Finally got the chain to be recognized - Currently debugging.
+    - Need to comment code -- will probably spend time writing good comments.
+    (Late June)
     - Been working on recognizing the chain. Made some good progress and as you can see based on the True's when you run the code there are some connections being made.
     - My work will continue to polish this backend chain identification. You will notice I added more methods to the Bubble class and completely got RID of the placeBubble method.
     - Hashs (#) that are all the way to the left represents Code that is commented out. I also denoted most of my comments with a Date (6/25/14) so you can see what I did.
     - Also note: The GameWorld class does not really do anything right now... It will be used once the graphics and mechanis are done and we can add levels, moving bubbles, etc.
     - Let me know if you have any questions
     - QUICK TEST FOR PULL REQUEST
+    
 Evan's Notes
     - 
 '''
@@ -62,7 +67,7 @@ class GameScreen:
         bubblesOnBoard= [   [0,0,0,0,4,0,0,5],
                             [0,0,0,4,0,0,5],
                             [0,0,0,0,0,0,0,5],
-                            [0,0,0,0,0,0,0],
+                            [0,0,0,0,0,5,5],
                             [0,0,0,0,0,0,0,0],
                             [0,0,0,0,0,0,0],
                             [0,0,0,0,0,0,0,0],
@@ -110,6 +115,7 @@ class GameScreen:
                         pygame.draw.circle(screen, bubble.bubbleColor, (bubble.getPosX(row),int(bubble.getPosY(col))), RADIUS)
                         GameWorld.connectedBubbles = [] # Reset list to find new bubble chains. (6/25/14)
                         Bubble.checkBubbleChain(bubble, row, col,bubblesOnBoard)
+                        print GameWorld.connectedBubbles.__len__()
                     
                     # If it's odd row: start grid slightly offset of left side of screen.
                 else:
@@ -120,11 +126,13 @@ class GameScreen:
                             pygame.draw.circle(screen, bubble.bubbleColor, (bubble.getPosX(row),int(bubble.getPosY(col))), RADIUS)
                             GameWorld.connectedBubbles = [] # Reset list to find new bubble chains. (6/25/14)
                             Bubble.checkBubbleChain(bubble, row, col,bubblesOnBoard)
+                            print GameWorld.connectedBubbles.__len__()
 
 #         # Once all bubbles are loaded, Find connections. (6/25/14)
 #         GameWorld.connectedBubbles = [] # Reset list to find new bubble chains. (6/25/14)
 #         Bubble.checkBubbleChain(bubble, row, col,bubblesOnBoard)
 
+#-------------------------------------------------- ADDED TO BUBBLE CLASS ----------------------------------------------------
 #     # Draws bubble on screen based on even or odd row.
 #     def placeBubble(self,x,y,bubblesOnBoard, bubble):
 #         self.row = x
@@ -147,7 +155,7 @@ class GameScreen:
 # #             Bubble.checkBubbleChain(bubble,self.row,self.col,bubblesOnBoard)
 #         print GameWorld.connectedBubbles.__len__()
 #     
-
+#-------------------------------------------------- ADDED TO BUBBLE CLASS ----------------------------------------------------
 
 class Bubble:
     radius = RADIUS
@@ -199,8 +207,13 @@ class Bubble:
         
     # Recursively create chain of matching bubbles that are attached.
     def checkBubbleChain(self, row,col, bubblesOnBoard):
+#         print "Row and column being checked: ", row,"'",col, "\n"
+        # Exception: Out of bounds
+        if row < 0 or col < 0: return
+        
         odd = row%2
-
+#         print row,col
+        
         GameWorld.connectedBubbles.append(str(row)+","+str(col))
         i = -1
         j = -1
@@ -208,7 +221,8 @@ class Bubble:
             while j <= 1:
                 if i != 0 or j != 0:
                     if i == 0 or j == 0 or (j==-1 and odd == 0) or (j==1 and odd ==1):
-                        print self.isNewChain(row+i,col+j,bubblesOnBoard[row][col], bubblesOnBoard)
+#                         print "Row and Column inRange/newChain Check: ",row+i,col+j
+#                         print "In Range: ",self.inRange(row+i,col+j), "is a new Chain:", self.isNewChain(row+i, col+j, bubblesOnBoard[row][col], bubblesOnBoard)
                         if self.inRange(row+i,col+j) and self.isNewChain(row+i, col+j,bubblesOnBoard[row][col], bubblesOnBoard):
                             self.checkBubbleChain(row+i, col+j,bubblesOnBoard)
                 j+=1
@@ -216,9 +230,10 @@ class Bubble:
     
     # If the row and column exists return true. Else return false.
     def inRange(self,x,y):
+        if( x<0 or y<0 ): return False
         if(x >= ROWS): return False
-        if(y%2 == 0 and y >= COLUMNS_EVEN): return False
-        if(y >= COLUMNS_ODD): return False
+        if(x%2 == 0 and y >= COLUMNS_EVEN): return False
+        elif(x%2 == 1 and y >= COLUMNS_ODD): return False # Made elif and added even/odd check to fix "False" incorrectly returning (6/30/14)
         return True #ADDED 6/25/2014: May have been error (was returning none).
     
     def isNewChain(self,row, col, val, bubblesOnBoard):
@@ -227,21 +242,23 @@ class Bubble:
 #         print self.getValue(row,col, bubblesOnBoard)
 #         GameWorld.connectedBubbles.__contains__(str(row)+","+str(col))
         valuesMatch = val == self.getValue(row,col, bubblesOnBoard)
+#         print "value", val,"bubbleOnBoard", bubblesOnBoard[0][7], "getValue value: ",self.getValue(row,col, bubblesOnBoard)
+
         if str(row)+","+str(col) in GameWorld.connectedBubbles:
-            bubbleConnected = False
+            alreadyVisited = True
         else:
-            bubbleConnected = True
-        
-        return bubbleConnected and valuesMatch
+            alreadyVisited = False
+#         print "Already Visited:", alreadyVisited, "Values are matching:", valuesMatch
+        return (alreadyVisited == False) and valuesMatch
     
     # SET ON GAMESCREEN NOT WORLD
     def getValue(self,row,col, bubblesOnBoard):
         #Check Out of Range (6/25/2014) :: ADDED '-1' to account for index 0.
         if row > ROWS-1:
             return -1
-        if col%2==0 and col > COLUMNS_EVEN-1:
+        if row%2==0 and col > COLUMNS_EVEN-1:
             return -1
-        if col > COLUMNS_ODD-1:
+        elif row%2==1 and col > COLUMNS_ODD-1:
             return -1
         
         # Check if a bubble is on the board.
