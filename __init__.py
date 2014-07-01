@@ -9,7 +9,7 @@ Created on May 30, 2014
 NOTES UPDATED 7/1/2014
 Alex's Notes
     (7/1/2014)
-    - Finally got the chain to be recognized - Currently debugging.
+    - Finally got the chain to be recognized - Finished debugging (swapped while loop for for loop and worked every test)
     - Need to comment code -- will probably spend time writing good comments.
     (Late June)
     - Been working on recognizing the chain. Made some good progress and as you can see based on the True's when you run the code there are some connections being made.
@@ -64,8 +64,8 @@ class GameScreen:
         self.width, self.height = screen.get_size()
         self.backGroundLayer = pygame.Surface(screen.get_size())
         # DEFAULT: Level 1 Test
-        bubblesOnBoard= [   [0,0,0,0,4,0,0,5],
-                            [0,0,0,4,0,0,5],
+        bubblesOnBoard= [   [1,0,0,4,0,0,3,5],
+                            [2,1,0,4,0,0,5],
                             [0,0,0,0,0,0,0,5],
                             [0,0,0,0,0,5,5],
                             [0,0,0,0,0,0,0,0],
@@ -207,7 +207,6 @@ class Bubble:
         
     # Recursively create chain of matching bubbles that are attached.
     def checkBubbleChain(self, row,col, bubblesOnBoard):
-#         print "Row and column being checked: ", row,"'",col, "\n"
         # Exception: Out of bounds
         if row < 0 or col < 0: return
         
@@ -215,18 +214,15 @@ class Bubble:
 #         print row,col
         
         GameWorld.connectedBubbles.append(str(row)+","+str(col))
-        i = -1
-        j = -1
-        while i <= 1:
-            while j <= 1:
-                if i != 0 or j != 0:
+        
+        for i in range(-1,2):
+            for j in range(-1,2):
+                if i != 0 or j != 0: 
                     if i == 0 or j == 0 or (j==-1 and odd == 0) or (j==1 and odd ==1):
-#                         print "Row and Column inRange/newChain Check: ",row+i,col+j
 #                         print "In Range: ",self.inRange(row+i,col+j), "is a new Chain:", self.isNewChain(row+i, col+j, bubblesOnBoard[row][col], bubblesOnBoard)
                         if self.inRange(row+i,col+j) and self.isNewChain(row+i, col+j,bubblesOnBoard[row][col], bubblesOnBoard):
                             self.checkBubbleChain(row+i, col+j,bubblesOnBoard)
-                j+=1
-            i+=1
+                
     
     # If the row and column exists return true. Else return false.
     def inRange(self,x,y):
