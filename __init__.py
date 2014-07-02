@@ -29,6 +29,7 @@ from random import randrange
 from math import *
 
 # TEMP GLOBAL VARIABLES
+ROTATION_SPEED = 2
 RADIUS = 18
 DISTANCE = RADIUS * sqrt(3) 
 ROWS = 14
@@ -59,10 +60,10 @@ class GameWorld:
 class GameScreen:
     def __init__(self, gameWorld, screen):
         self.gameWorld = gameWorld
-        print "TESTING"
         self.screen = screen
         self.width, self.height = screen.get_size()
         self.backGroundLayer = pygame.Surface(screen.get_size())
+        self.cannon = Cannon()
         # DEFAULT: Level 1 Test
         bubblesOnBoard= [   [1,0,0,4,0,0,3,5],
                             [2,1,0,4,0,0,5],
@@ -81,10 +82,11 @@ class GameScreen:
         
         # Build right line border.
         self.borderLine()
-        # Build cannon.
-        self.buildCannon()
-
+        # Load board bubbles.
         self.loadBubbles(bubblesOnBoard)
+    
+    def getCannon(self):
+        return self.cannon
         
     def borderLine(self):
         self.lineColor = (250,250,250)
@@ -92,13 +94,6 @@ class GameScreen:
         self.borderY = screenY
         pygame.draw.line(screen, self.lineColor, (self.borderX, 0), (self.borderX, screenY), 5)
         
-    def buildCannon(self):
-        self.cannonColor = (255,255,255)
-        #Rectangle: Left,Top,Width, Height
-        self.rectangle = [(RADIUS*8)-RADIUS, 450-RADIUS,2*RADIUS,2*RADIUS]
-        self.startRadian = pi
-        self.endRadian = 2*pi
-        pygame.draw.arc(screen, self.cannonColor, self.rectangle, self.startRadian, self.endRadian,3)
 
         
     # Checks if a bubble should be placed
@@ -111,22 +106,18 @@ class GameScreen:
                 if(row%2 == 0):
                     if(row < 8 and self.bubblesOnBoard[row][col] > 0):
                         bubble = Bubble(bubblesOnBoard[row][col], row, col)
-#                         self.placeBubble(row,col,bubblesOnBoard,bubble)
                         pygame.draw.circle(screen, bubble.bubbleColor, (bubble.getPosX(row),int(bubble.getPosY(col))), RADIUS)
                         GameWorld.connectedBubbles = [] # Reset list to find new bubble chains. (6/25/14)
                         Bubble.checkBubbleChain(bubble, row, col,bubblesOnBoard)
-                        print GameWorld.connectedBubbles.__len__()
                     
                     # If it's odd row: start grid slightly offset of left side of screen.
                 else:
                     if(col < COLUMNS_ODD): # Implemented but not sure why???
                         if(row < 8 and self.bubblesOnBoard[row][col] > 0):
                             bubble = Bubble(bubblesOnBoard[row][col], row, col)
-#                             self.placeBubble(row,col,bubblesOnBoard,bubble)
                             pygame.draw.circle(screen, bubble.bubbleColor, (bubble.getPosX(row),int(bubble.getPosY(col))), RADIUS)
                             GameWorld.connectedBubbles = [] # Reset list to find new bubble chains. (6/25/14)
                             Bubble.checkBubbleChain(bubble, row, col,bubblesOnBoard)
-                            print GameWorld.connectedBubbles.__len__()
 
 #         # Once all bubbles are loaded, Find connections. (6/25/14)
 #         GameWorld.connectedBubbles = [] # Reset list to find new bubble chains. (6/25/14)
@@ -156,6 +147,26 @@ class GameScreen:
 #         print GameWorld.connectedBubbles.__len__()
 #     
 #-------------------------------------------------- ADDED TO BUBBLE CLASS ----------------------------------------------------
+class Cannon:
+    def __init__(self):
+        self.cannonColor = (255,255,255)
+        #Rectangle: Left,Top,Width, Height
+        self.rectangle = [(RADIUS*8)-RADIUS, 450-RADIUS,2*RADIUS,2*RADIUS]
+        self.startRadian = pi
+        self.endRadian = 2*pi
+        pygame.draw.arc(screen, self.cannonColor, self.rectangle, self.startRadian, self.endRadian,3)
+    
+    def rotateLeft(self, move):
+        if( move == True ):
+            print True
+        else:
+            print False
+        
+    def rotateRight(self, move):
+        if( move == True):
+            self.startRadian -= ROTATION_SPEED
+        else:
+            self.endRadian += ROTATION_SPEED
 
 class Bubble:
     radius = RADIUS
@@ -272,6 +283,7 @@ screen = pygame.display.set_mode((screenX, screenY),0,32)
 clock = pygame.time.Clock()
 gameWorld = GameWorld()
 gameScreen = GameScreen(gameWorld, screen) # Class to build screen/play board.
+cannon = gameScreen.getCannon()
 
 gameRunning = True
 
@@ -283,6 +295,18 @@ while gameRunning:
             running = False
             pygame.quit()
             sys.exit()
+        if event.type == KEYDOWN:
+            if event.key == pygame.K_UP: # Fire a bubble.
+                print "fire"
+            if event.key == pygame.K_LEFT: # Move cannon left.
+                cannon.rotateLeft(True)
+            elif event.key == pygame.K_RIGHT: # Move cannon right.
+                cannon.rotateRight(True)
+        if event.type == KEYUP:
+            if event.key == pygame.K_LEFT: 
+                cannon.rotateLeft(False)
+            elif event.key == pygame.K_RIGHT:
+                cannon.rotateRight(False)
     
     pygame.display.update()
 
